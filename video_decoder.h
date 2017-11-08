@@ -3,11 +3,11 @@
 #include <list>
 
 #include "packet_consumer.h"
-#include "frame_provider.h"
 #include "codec_context.h"
 
+class FrameConsumer;
 
-class VideoDecoder final : public PacketConsumer, public FrameProvider
+class VideoDecoder final : public PacketConsumer
 {
 	VideoDecoder(const VideoDecoder&) = delete;
 	const VideoDecoder& operator=(const VideoDecoder&) = delete;
@@ -21,10 +21,9 @@ public:
 	// implementation of PacketConsumer interface
 	bool AcceptPacket(const Packet& packet) noexcept override;
 	
-private:
-	// implementation of FrameProvider interface
-	bool TestConsumer(const FrameConsumer* frame_consumer) const noexcept override;
+	void AddFrameConsumer(FrameConsumer* frame_consumer);
 		
 private:
 	CodecContext& _codec_ctx;
+	std::list<FrameConsumer*> _consumers;
 };

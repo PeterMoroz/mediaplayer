@@ -6,6 +6,12 @@
 #include <exception>
 #include <stdexcept>
 
+extern "C"
+{
+	#include <libavutil/pixfmt.h>
+	#include <libswscale/swscale.h>
+}
+
 #include "frame_consumer.h"
 
 class PPMWriter final : public FrameConsumer
@@ -16,26 +22,26 @@ class PPMWriter final : public FrameConsumer
 	const PPMWriter& operator=(PPMWriter&&) = delete;
 
 public:
-	PPMWriter(AVPixelFormat pix_fmt, int width, int height);
+	PPMWriter(int out_width, int out_height);
 	~PPMWriter();
 	
 	// implementation of FrameConsumer interface
-	bool AgreeWith(AVPixelFormat format, int width, int height) const noexcept override
-	{
-		return (format == _frame_pix_format && width == _frame_width && height == _frame_height);
-	}
 	void AcceptFrame(const Frame& frame) override;
 
-public:	
+public:
+	void CreateFrameBuffer() throw (std::logic_error, std::runtime_error);
 	void SetOutputDirectory(const std::string& outdir);
+	void SetInputConversion(AVPixelFormat in_pix_fmt, int in_width, int in_height) throw (std::logic_error, std::runtime_error);
 	
 private:
 	void WriteFrame(const Frame& frame) noexcept;
 	
 private:
-	AVPixelFormat _frame_pix_format;
-	int _frame_width;
-	int _frame_height;
+	int _out_width;
+	int _out_height;
 	std::uint32_t _frames_count;
 	std::string _output_dir;
+	struct SwsContext* _scale_context;	// TO DO: replace by unique_ptr with deleter function
+	int _in_height;	// needed by sws_scale
+	Frame _frame;
 };

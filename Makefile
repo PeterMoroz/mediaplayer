@@ -15,8 +15,8 @@ PKG_CONFIG_PATH := $(HOME)/ffmpeg_build/lib/pkgconfig
 
 all: mediaplayer
 
-SRC := codec_context.cpp format_context.cpp frame.cpp frame_converter.cpp frame_provider.cpp frames_reader.cpp packet.cpp ppm_writer.cpp scale_context.cpp stream_demuxer.cpp video_decoder.cpp mediaplayer.cpp
-INC := codec_context.h dump_ffmpeg_error.h format_context.h frame.h frame_converter.h frame_consumer.h frame_provider.h frames_reader.h packet.h packet_consumer.h ppm_writer.h scale_context.h stream_demuxer.h video_decoder.h
+SRC := codec_context.cpp format_context.cpp frame.cpp frames_reader.cpp packet.cpp ppm_writer.cpp stream_demuxer.cpp video_decoder.cpp mediaplayer.cpp
+INC := codec_context.h dump_ffmpeg_error.h format_context.h frame.h frame_consumer.h frames_reader.h packet.h packet_consumer.h ppm_writer.h stream_demuxer.h video_decoder.h
 
 mediaplayer: $(SRC) $(INC)
 	# g++ -std=c++11 -g -I$(HOME)/ffmpeg_build/include format_context.cpp mediaplayer.cpp -o mediaplayer -L$(HOME)/ffmpeg_build/lib -lavformat -lavcodec -lswscale -lz

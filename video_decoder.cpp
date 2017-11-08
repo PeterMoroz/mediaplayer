@@ -10,6 +10,7 @@
 
 VideoDecoder::VideoDecoder(CodecContext& codec_ctx)
 	: _codec_ctx(codec_ctx)
+	, _consumers()
 	{
 		
 	}
@@ -33,7 +34,7 @@ bool VideoDecoder::AcceptPacket(const Packet& packet) noexcept
 		
 		if (frame_finished)
 		{
-			for (FrameConsumer* consumer : consumers())
+			for (FrameConsumer* consumer : _consumers)
 				consumer->AcceptFrame(frame);
 		}
 		
@@ -45,8 +46,8 @@ bool VideoDecoder::AcceptPacket(const Packet& packet) noexcept
 	return true;
 }
 
-bool VideoDecoder::TestConsumer(const FrameConsumer* frame_consumer) const noexcept
+void VideoDecoder::AddFrameConsumer(FrameConsumer* frame_consumer)
 {
 	assert(frame_consumer != NULL);
-	return frame_consumer->AgreeWith(_codec_ctx->pix_fmt, _codec_ctx->width, _codec_ctx->height);
+	_consumers.push_back(frame_consumer);
 }

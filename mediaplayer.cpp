@@ -1,8 +1,6 @@
 extern "C"
 {
 #include <libavutil/error.h>
-/*#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>*/	
 #include <libavutil/pixfmt.h>
 }
 
@@ -16,7 +14,6 @@ extern "C"
 #include "frames_reader.h"
 #include "stream_demuxer.h"
 #include "video_decoder.h"
-#include "frame_converter.h"
 #include "ppm_writer.h"
 
 namespace mediaplayer
@@ -69,23 +66,11 @@ int main(int argc, char* argv[])
 		VideoDecoder video_decoder(codec_ctx);
 		stream_demuxer.AddStreamTarget(video_stream_idx, &video_decoder);
 		
-		FrameConverter frame_converter(codec_ctx->width, codec_ctx->height, codec_ctx->pix_fmt);
-		frame_converter.CreateConversionContext(codec_ctx->width, codec_ctx->height, AV_PIX_FMT_RGB24);
-		if (!video_decoder.AddFrameConsumer(&frame_converter))
-		{
-			std::cerr << __FILE__ << ':' << __LINE__
-				<< " frame_converter couldn't be frame consumer of video_decoder." << std::endl;
-			//throw std::logic_error("");
-		}
+		PPMWriter ppm_writer(codec_ctx->width, codec_ctx->height);
+		video_decoder.AddFrameConsumer(&ppm_writer);
 		
-		PPMWriter ppm_writer(AV_PIX_FMT_RGB24, codec_ctx->width, codec_ctx->height);
-		if (!frame_converter.AddFrameConsumer(&ppm_writer))
-		{
-			std::cerr << __FILE__ << ':' << __LINE__
-				<< " ppm_writer couldn't be frame consumer of frame_converter." << std::endl;
-			//throw std::logic_error("");			
-		}
-
+		ppm_writer.CreateFrameBuffer();
+		ppm_writer.SetInputConversion(codec_ctx->pix_fmt, codec_ctx->width, codec_ctx->height);
 		ppm_writer.SetOutputDirectory("ppm-output");
 		
 		frames_reader.ReadFrames(format_ctx);
