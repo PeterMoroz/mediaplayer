@@ -4,6 +4,9 @@ extern "C"
 #include <libavutil/pixfmt.h>
 }
 
+#include <SDL.h>
+#include <SDL_thread.h>
+
 #include <cassert>
 
 #include <iostream>
@@ -14,7 +17,7 @@ extern "C"
 #include "frames_reader.h"
 #include "stream_demuxer.h"
 #include "video_decoder.h"
-#include "ppm_writer.h"
+#include "sdl_screen.h"
 
 namespace mediaplayer
 {
@@ -37,6 +40,12 @@ int main(int argc, char* argv[])
 	}
 	
 	av_register_all();
+	
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER))
+	{
+		std::cerr << "Couldn't initialize SDL: " << SDL_GetError() << std::endl;
+		std::exit(-1);
+	}
 	
 	try {
 		FormatContext format_ctx;
@@ -66,19 +75,22 @@ int main(int argc, char* argv[])
 		VideoDecoder video_decoder(codec_ctx);
 		stream_demuxer.AddStreamTarget(video_stream_idx, &video_decoder);
 		
-		PPMWriter ppm_writer(codec_ctx->width, codec_ctx->height);
-		video_decoder.AddFrameConsumer(&ppm_writer);
+		SDLScreen sdl_screen;
+		video_decoder.AddFrameConsumer(&sdl_screen);
 		
-		ppm_writer.CreateFrameBuffer();
-		ppm_writer.SetInputConversion(codec_ctx->pix_fmt, codec_ctx->width, codec_ctx->height);
-		ppm_writer.SetOutputDirectory("ppm-output");
+		sdl_screen.Initialize("FFmpeg videoplayer", codec_ctx->width, codec_ctx->height);
+		sdl_screen.SetInputConversion(codec_ctx->pix_fmt, codec_ctx->width, codec_ctx->height);
 		
 		frames_reader.ReadFrames(format_ctx);
 
 	} catch (const std::exception& ex) {
 		std::cerr << "Exception: " << ex.what() << std::endl;
+		SDL_Quit();
 		std::exit(-1);
 	}
+	
+	SDL_Quit();
+	std::exit(0);
 	
 	return 0;
 }

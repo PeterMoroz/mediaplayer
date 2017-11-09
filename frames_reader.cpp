@@ -6,6 +6,8 @@ extern "C"
 	#include <libavformat/avformat.h>
 }
 
+#include <SDL.h>
+
 #include "frames_reader.h"
 #include "packet_consumer.h"
 
@@ -36,7 +38,11 @@ void FramesReader::ReadFrames(FormatContext& format_context) throw (std::runtime
 	{
 		for (PacketConsumer* consumer : _consumers)
 			consumer->AcceptPacket(packet);	// ignore returned value
-		av_free_packet(&packet);	
+		av_free_packet(&packet);
+		SDL_Event event;
+		SDL_PollEvent(&event);
+		if (event.type == SDL_QUIT)
+			break;
 	}
 	rc = rc; // dummy code. TO DO: check here, if EOF or error
 }
