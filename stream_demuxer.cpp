@@ -27,9 +27,9 @@ void StreamDemuxer::RemoveStreamTarget(int stream_idx)
 	_consumers.erase(stream_idx);
 }
 
-bool StreamDemuxer::AcceptPacket(const Packet& packet) noexcept
+bool StreamDemuxer::AcceptPacket(const AVPacket& packet) noexcept
 {
-	std::map<int, PacketConsumer*>::iterator it = _consumers.find(packet.stream_index());
+	std::map<int, PacketConsumer*>::iterator it = _consumers.find(packet.stream_index);
 	if (it == _consumers.end())
 		return false;
 	return (*it->second).AcceptPacket(packet);

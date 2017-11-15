@@ -31,14 +31,12 @@ void FramesReader::AddPacketConsumer(PacketConsumer* packet_consumer)
 
 void FramesReader::ReadFrames(FormatContext& format_context) throw (std::runtime_error)
 {
-	Packet packet;
-	//AVPacket packet;
+	AVPacket packet;
 	int rc = 0;
 	while ((rc = av_read_frame(format_context, &packet)) >= 0)
 	{
 		for (PacketConsumer* consumer : _consumers)
 			consumer->AcceptPacket(packet);	// ignore returned value
-		av_free_packet(&packet);
 		SDL_Event event;
 		SDL_PollEvent(&event);
 		if (event.type == SDL_QUIT)

@@ -18,6 +18,8 @@ extern "C"
 #include "stream_demuxer.h"
 #include "video_decoder.h"
 #include "sdl_screen.h"
+#include "sdl_packet_queue.h"
+#include "sdl_audio_player.h"
 
 namespace mediaplayer
 {
@@ -60,26 +62,50 @@ int main(int argc, char* argv[])
 		if (video_stream_idx == -1)
 			throw std::logic_error("Couldn't find videostream in container.");
 			
+		int audio_stream_idx = format_ctx.FindFirstStreamByType(AVMEDIA_TYPE_AUDIO);
+		
+			
 		AVCodecContext* video_codec_ctx = format_ctx.GetCodecContext(video_stream_idx);
 		if (video_codec_ctx == NULL)
 			throw std::logic_error("Couldn't find video codec context.");
+			
+		AVCodecContext* audio_codec_ctx = audio_stream_idx >= 0 ? format_ctx.GetCodecContext(audio_stream_idx) : NULL;
+		if (audio_stream_idx >= 0 && audio_codec_ctx == NULL)
+			throw std::logic_error("Couldn't find audio codec context.");
 
-		CodecContext codec_ctx;
-		codec_ctx.OpenCodec(video_codec_ctx);
+
+		CodecContext video_codec_context;
+		video_codec_context.OpenCodec(video_codec_ctx);
+		
+		CodecContext audio_codec_context;
+		if (audio_stream_idx >= 0)
+			audio_codec_context.OpenCodec(audio_codec_ctx);
+
 		
 		FramesReader frames_reader;
 		
 		StreamDemuxer stream_demuxer;
 		frames_reader.AddPacketConsumer(&stream_demuxer);
 		
-		VideoDecoder video_decoder(codec_ctx);
+		SDLPacketQueue audio_queue;
+		
+		VideoDecoder video_decoder(video_codec_context);
 		stream_demuxer.AddStreamTarget(video_stream_idx, &video_decoder);
+		if (audio_stream_idx >= 0)
+			stream_demuxer.AddStreamTarget(audio_stream_idx, &audio_queue);
+			
+		SDLAudioPlayer audio_player(audio_codec_context, audio_queue);
+		if (audio_stream_idx >= 0)
+		{
+			audio_player.OpenDevice();
+			audio_player.RunPlayback();
+		}
 		
 		SDLScreen sdl_screen;
 		video_decoder.AddFrameConsumer(&sdl_screen);
 		
-		sdl_screen.Initialize("FFmpeg videoplayer", codec_ctx->width, codec_ctx->height);
-		sdl_screen.SetInputConversion(codec_ctx->pix_fmt, codec_ctx->width, codec_ctx->height);
+		sdl_screen.Initialize("FFmpeg videoplayer", video_codec_context->width, video_codec_context->height);
+		sdl_screen.SetInputConversion(video_codec_context->pix_fmt, video_codec_context->width, video_codec_context->height);
 		
 		frames_reader.ReadFrames(format_ctx);
 

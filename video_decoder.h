@@ -19,7 +19,7 @@ public:
 	~VideoDecoder();
 	
 	// implementation of PacketConsumer interface
-	bool AcceptPacket(const Packet& packet) noexcept override;
+	bool AcceptPacket(const AVPacket& packet) noexcept override;
 	
 	void AddFrameConsumer(FrameConsumer* frame_consumer);
 		

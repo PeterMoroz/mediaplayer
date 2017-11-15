@@ -20,7 +20,7 @@ public:
 	void AddStreamTarget(int stream_idx, PacketConsumer* packet_consumer) throw (std::logic_error);
 	void RemoveStreamTarget(int stream_idx);
 	
-	bool AcceptPacket(const Packet& packet) noexcept override;
+	bool AcceptPacket(const AVPacket& packet) noexcept override;
 	
 private:
 	std::map<int, PacketConsumer*> _consumers;

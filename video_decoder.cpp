@@ -20,7 +20,7 @@ VideoDecoder::~VideoDecoder()
 	
 }
 
-bool VideoDecoder::AcceptPacket(const Packet& packet) noexcept
+bool VideoDecoder::AcceptPacket(const AVPacket& packet) noexcept
 {
 	try {
 		Frame frame;
