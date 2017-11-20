@@ -5,7 +5,6 @@
 #include <iostream>
 #include <sstream>
 
-#include <experimental/filesystem>
 
 extern "C"
 {
@@ -29,7 +28,7 @@ SDLScreen::SDLScreen()
 	, _uv_pitch(0)
 	{
 	}
-	
+
 SDLScreen::~SDLScreen()
 {
 	sws_freeContext(_scale_context);
@@ -38,7 +37,7 @@ SDLScreen::~SDLScreen()
 void SDLScreen::Initialize(const char* caption, int width, int height) throw (std::runtime_error)
 {
 	using namespace std;
-	
+
 	unique_ptr<SDL_Window, function<void (SDL_Window*)>> window(
 			SDL_CreateWindow(caption, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0),
 			SDL_DestroyWindow);
@@ -55,27 +54,27 @@ void SDLScreen::Initialize(const char* caption, int width, int height) throw (st
 
 	size_t yplane_sz = width * height;
 	size_t uvplane_sz = width * height / 4;
-	
+
 	unique_ptr<uint8_t, function<void(void*)>> yplane(static_cast<uint8_t*>(malloc(yplane_sz)), free);
 	unique_ptr<uint8_t, function<void(void*)>> uplane(static_cast<uint8_t*>(malloc(uvplane_sz)), free);
 	unique_ptr<uint8_t, function<void(void*)>> vplane(static_cast<uint8_t*>(malloc(uvplane_sz)), free);
-	
+
 	if (!yplane || !uplane || !vplane)
 		throw runtime_error("malloc() failed.");
 
 	_width = width;
 	_height = height;
 	_uv_pitch = width / 2;
-	
+
 	_texture.swap(texture);
 	_renderer.swap(renderer);
 	_window.swap(window);
-	
+
 	_yplane.swap(yplane);
 	_uplane.swap(uplane);
 	_vplane.swap(vplane);
 }
-	
+
 void SDLScreen::AcceptFrame(const Frame& frame)
 {
 	assert(_scale_context);
@@ -88,13 +87,13 @@ void SDLScreen::AcceptFrame(const Frame& frame)
 	picture.linesize[0] = _width;
 	picture.linesize[1] = _uv_pitch;
 	picture.linesize[2] = _uv_pitch;
-	
+
 	int dst_height = sws_scale(_scale_context, frame->data, frame->linesize, 0, _in_height, picture.data, picture.linesize);
 	// TO DO: check that dst_height == _dst_height
-	
-	
+
+
 	SDL_UpdateYUVTexture(_texture.get(), NULL, _yplane.get(), _width, _uplane.get(), _uv_pitch, _vplane.get(), _uv_pitch);
-	
+
 	SDL_RenderClear(_renderer.get());
 	SDL_RenderCopy(_renderer.get(), _texture.get(), NULL, NULL);
 	SDL_RenderPresent(_renderer.get());
@@ -102,13 +101,13 @@ void SDLScreen::AcceptFrame(const Frame& frame)
 
 void SDLScreen::SetInputConversion(AVPixelFormat in_pix_fmt, int in_width, int in_height) throw (std::logic_error, std::runtime_error)
 {
-	SwsContext* scale_context = sws_getContext(in_width, in_height, in_pix_fmt, 
-												_width, _height, AV_PIX_FMT_YUV420P, 
+	SwsContext* scale_context = sws_getContext(in_width, in_height, in_pix_fmt,
+												_width, _height, AV_PIX_FMT_YUV420P,
 												SWS_BILINEAR, NULL, NULL, NULL);
 	if (!scale_context)
 		throw std::runtime_error("sws_getContext() failed.");
 	std::swap(_scale_context, scale_context);
 	sws_freeContext(scale_context);
-	
+
 	_in_height = in_height;
 }
